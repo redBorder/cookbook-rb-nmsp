@@ -1,7 +1,6 @@
 # cookbook-rb-mobility
 
-Cookbook to install and configure redborder rb-mobility
-
+Cookbook to install and configure redborder rb-nmsp
 ### Platforms
 
 - Centos 7
