@@ -1,4 +1,4 @@
-# cookbook-rb-mobility
+# cookbook-rb-nmsp
 
 Cookbook to install and configure redborder rb-nmsp
 ### Platforms
