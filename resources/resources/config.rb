@@ -14,5 +14,6 @@ attribute :name, :kind_of => String, :default => "localhost"
 attribute :ip, :kind_of => String, :default => "127.0.0.1"
 attribute :flow_nodes, :kind_of => Array, :default => []
 attribute :proxy_nodes, :kind_of => Object
-attribute :memory, :kind_of => Fixnum, :default => 524288
+attribute :memory, :kind_of => Fixnum, :default => 0
+attribute :hosts, :kind_of => Array, :default => [node.name]
 

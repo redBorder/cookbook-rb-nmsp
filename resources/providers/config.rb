@@ -8,6 +8,7 @@ action :add do
     flow_nodes = new_resource.flow_nodes
     proxy_nodes = new_resource.proxy_nodes
     memory = new_resource.memory
+    hosts = new_resource.hosts
 
     yum_package "redborder-nmsp" do
       action :upgrade
@@ -21,7 +22,7 @@ action :add do
       action :create
     end
 
-    ##########################
+    ##########################nnnnn
     # Retrieve databag data
     ##########################
     db_redborder = Chef::DataBagItem.load("passwords", "db_redborder") rescue db_redborder = {}
@@ -39,14 +40,14 @@ action :add do
       group "root"
       mode '0644'
       retries 2
-      variables(:zk_hosts => "", :flow_nodes => flow_nodes,
+      variables(:zk_hosts => hosts, :flow_nodes => flow_nodes,
                 :cloudproxy_nodes => proxy_nodes,
                 :db_name => psql_name,
                 :db_hostname => db_redborder["hostname"],
                 :db_pass => psql_password,
                 :db_username => psql_user,
                 :db_port => psql_port)
-      notifies :restart, 'service[redborder-social]', :delayed
+      notifies :restart, 'service[redborder-nmsp]', :delayed
       action :create
     end
 
