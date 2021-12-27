@@ -1,4 +1,4 @@
-# Cookbook Name:: rbsocial
+# Cookbook Name:: rbnmsp
 #
 # Provider:: config
 #
