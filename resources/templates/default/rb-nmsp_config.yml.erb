@@ -1,7 +1,6 @@
 zk_connect: "<%= @zk_hosts %>"
 rssi_limit_db: -85
-<% if ((node["redborder"]["manager"]["topics"].nil? or node["redborder"]["manager"]["topics"]["rb_flow"].nil? or node["redborder"]["manager"]["topics"]["rb_flow"]=="realtime" or node["redborder"]["manager"]["topics"]["rb_flow"]=="both" or node["redborder"]["manager"]["topics"]["rb_flow"]=="rb-enrich")) %>
-<%# TODO and (node["redBorder"]["license"]["fmodules"].include?"all" or node["redborder"]["license"]["fmodules"].include?"flow")) %>
+<% if ((node["redborder"]["manager"]["topics"].nil? or node["redborder"]["manager"]["topics"]["rb_flow"].nil? or node["redborder"]["manager"]["topics"]["rb_flow"]=="realtime" or node["redborder"]["manager"]["topics"]["rb_flow"]=="both" or node["redborder"]["manager"]["topics"]["rb_flow"]=="rb-enrich") and (node["redborder"]["license"]["fmodules"].include?"all" or node["redborder"]["license"]["fmodules"].include?"flow")) %>
 psql: true
 psql_uri: "jdbc:postgresql://<%= @db_hostname.nil? ? "postgresql.#{node["redborder"]["cdomain"]}" : @db_hostname %><%= @db_port.nil? ? "" : ":#{@db_port.to_i}" %>/<%= @db_name.nil? ? "redborder" : @db_name %>"
 psql_user: "<%= @db_username %>"
