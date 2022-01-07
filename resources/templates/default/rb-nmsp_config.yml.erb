@@ -1,4 +1,4 @@
-zk_connect: "<%= @zk_hosts %>"
+zk_connect: '<%= (!@zk_hosts.nil? and @zk_hosts!="") ?  @zk_hosts : "127.0.0.1:2181" %>'
 rssi_limit_db: -85
 <% if ((node["redborder"]["manager"]["topics"].nil? or node["redborder"]["manager"]["topics"]["rb_flow"].nil? or node["redborder"]["manager"]["topics"]["rb_flow"]=="realtime" or node["redborder"]["manager"]["topics"]["rb_flow"]=="both" or node["redborder"]["manager"]["topics"]["rb_flow"]=="rb-enrich") and (node["redborder"]["license"]["fmodules"].include?"all" or node["redborder"]["license"]["fmodules"].include?"flow")) %>
 psql: true
