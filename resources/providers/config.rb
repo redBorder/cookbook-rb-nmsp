@@ -62,6 +62,16 @@ action :add do
       notifies :restart, 'service[redborder-nmsp]', :delayed
     end
 
+    cookbook_file "/etc/redborder-nmsp/aes.keystore" do
+      source "aes.keystore"
+      cookbook "rbnmsp"
+      owner "root"
+      group "root"
+      mode "0644"
+      ignore_failure true
+      notifies :restart, 'service[redborder-nmsp]', :delayed
+    end
+
     service "redborder-nmsp" do
       service_name "redborder-nmsp"
       ignore_failure true
