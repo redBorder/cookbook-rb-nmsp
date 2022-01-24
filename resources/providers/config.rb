@@ -146,7 +146,7 @@ action :configure_keys do #Usually used once
     nmsp_keys = Chef::DataBagItem.load("paswords", "nmspd-key-hashes") rescue nmsp_keys = nil
     if nmsp_keys.nil?
       execute 'Configure service keys' do
-        command "/usr/lib/redborder/bin/rb_nmsp_keys.sh -f"
+        command "/usr/lib/redborder/bin/rb_create_nmsp_keys.sh -fu"
         action :nothing
       end.run_action(:run)
 
