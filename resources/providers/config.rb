@@ -61,15 +61,18 @@ action :add do
       variables(:memory => memory)
       notifies :restart, 'service[redborder-nmsp]', :delayed
     end
-
-    cookbook_file "/etc/redborder-nmsp/aes.keystore" do
-      source "aes.keystore"
-      cookbook "rbnmsp"
-      owner "root"
-      group "root"
-      mode "0644"
-      ignore_failure true
-      notifies :restart, 'service[redborder-nmsp]', :delayed
+   
+    nmsp_keys = Chef::DataBagItem.load("passwords", "nmspd-key-hashes") rescue nmsp_keys = nil
+    unless nmsp_keys.nil? 
+      cookbook_file "/etc/redborder-nmsp/aes.keystore" do
+        source "aes.keystore"
+        cookbook "rbnmsp"
+        owner "root"
+        group "root"
+        mode "0644"
+        ignore_failure true
+        notifies :restart, 'service[redborder-nmsp]', :delayed
+      end
     end
 
     service "redborder-nmsp" do
@@ -133,6 +136,22 @@ action :deregister do #Usually used to deregister from consul
       node.set["rb-nmsp"]["registered"] = false
     end
     Chef::Log.info("rb-nmsp service has been deregistered from consul")
+  rescue => e
+    Chef::Log.error(e.message)
+  end
+end
+
+action :configure_keys do #Usually used once
+  begin
+    nmsp_keys = Chef::DataBagItem.load("paswords", "nmspd-key-hashes") rescue nmsp_keys = nil
+    if nmsp_keys.nil?
+      execute 'Configure service keys' do
+        command "/usr/lib/redborder/bin/rb_nmsp_keys.sh -f"
+        action :nothing
+      end.run_action(:run)
+
+    Chef::Log.info("rb-nmsp service keys has been configured")
+    end
   rescue => e
     Chef::Log.error(e.message)
   end
