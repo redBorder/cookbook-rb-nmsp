@@ -51,7 +51,7 @@ action :add do
       action :create
     end
 
-    template "/etc/redborder-nmsp/sysconfig" do
+    template "/etc/sysconfig/redborder-nmsp" do
       source "rb-nmsp_sysconfig.erb"
       cookbook "rbnmsp"
       owner "root"
