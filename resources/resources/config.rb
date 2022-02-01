@@ -3,7 +3,7 @@
 # Resource:: config
 #
 
-actions :add, :remove , :register, :deregister
+actions :add, :remove, :configure_keys, :register, :deregister
 default_action :add
 
 attribute :config_dir, :kind_of => String, :default => "/etc/redborder-nmsp"
