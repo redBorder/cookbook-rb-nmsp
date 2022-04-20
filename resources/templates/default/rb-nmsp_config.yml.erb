@@ -1,5 +1,6 @@
 zk_connect: '<%= (!@zk_hosts.nil? and @zk_hosts!="") ?  @zk_hosts : "127.0.0.1:2181" %>'
 rssi_limit_db: -85
+<% if node["redborder"]["mode"] %>
 <% if ((node["redborder"]["manager"]["topics"].nil? or node["redborder"]["manager"]["topics"]["rb_flow"].nil? or node["redborder"]["manager"]["topics"]["rb_flow"]=="realtime" or node["redborder"]["manager"]["topics"]["rb_flow"]=="both" or node["redborder"]["manager"]["topics"]["rb_flow"]=="rb-enrich") and (node["redborder"]["license"]["fmodules"].include?"all" or node["redborder"]["license"]["fmodules"].include?"flow")) %>
 psql: true
 psql_uri: "jdbc:postgresql://<%= @db_hostname.nil? ? "postgresql.#{node["redborder"]["cdomain"]}" : @db_hostname %><%= @db_port.nil? ? "" : ":#{@db_port.to_i}" %>/<%= @db_name.nil? ? "redborder" : @db_name %>"
@@ -67,6 +68,7 @@ sensors:
 <% end %>
 <% end %>
 <% @cloudproxy_nodes.each_with_index do |cp_node, i| %>
+<% cp_node = cp_node[1] %>
 <% if !cp_node["redborder"].nil? and !cp_node["redborder"]["ipsync"].nil? and !cp_node["redborder"]["ipsync"].empty? and !cp_node["redborder"]["tunnels"].nil? and !cp_node["ohai_time"].nil? %>
 <% cp_node["redborder"]["tunnels"].each do |secgw_name, secgw| %>
 <% secgw["sensors_mapping"].each do |sensor_name, flow_node| %>
@@ -97,6 +99,39 @@ sensors:
 <% end %>
 <% end %>
 <% end if !secgw["sensors_mapping"].nil? %>
+<% end %>
+<% end %>
+<% end %>
+<% else %>
+psql: false
+sensors:
+<% flow_ips = [] %>
+<% if !node["redborder"].nil? and !node["redborder"]["sensors_mapping"].nil? and !node["redborder"]["sensors_mapping"]["flow"].nil? and node["redborder"]["sensors_mapping"]["flow"].size > 0 and !node["redborder"]["nmsp"].nil? and !node["redborder"]["nmsp"]["macAddress"].nil? and !node["redborder"]["nmsp"].empty? and !node["redborder"]["nmsp"]["macAddress"].empty? %>
+  <% node["redborder"]["sensors_mapping"]["flow"].each do |rbname, flow_node| %>
+  <% if !flow_node.nil? and !flow_node['nmsp'].nil? and (flow_node['nmsp']==true or flow_node['nmsp']=="true" or flow_node['nmsp']=="1" or flow_node['nmsp']==1) and !flow_node["ipaddress"].nil? and !flow_ips.include?flow_node["ipaddress"]%>
+  <% flow_ips << flow_node["ipaddress"] %>
+  -
+    address: "<%= flow_node["ipaddress"] %>"
+    version: "<%= (flow_node["rbversion"].nil? or flow_node["rbversion"]=="") ? "8" : flow_node["rbversion"]  %>"
+<% if flow_node["nmsp_client_stats"] == "1" or flow_node["nmsp_client_stats"] == true or flow_node["nmsp_client_stats"] == 1 %>
+    clientStats: true
+<% else %>
+    clientStats: false
+<% end %>
+<% if flow_node["nmsp_wireless_health"] == "1" or flow_node["nmsp_wireless_health"] == true or flow_node["nmsp_wireless_health"] == 1 %>
+    apMonitor: true
+    apMonitorSleep: 300
+<% else %>
+    apMonitor: false
+<% end %>
+    enrichment:
+      sensor_name: "<%= rbname %>"
+<% ["sensor_uuid", "deployment", "deployment_uuid", "market", "market_uuid", "campus", "campus_uuid", "building", "building_uuid", "floor", "floor_uuid"].each do |ss| %>
+<% if !flow_node[ss].nil? and flow_node[ss]!="" %>
+      <%= ss %>: "<%= flow_node[ss] %>"
+<% end %>
+<% end %>
+<% end %>
 <% end %>
 <% end %>
 <% end %>
