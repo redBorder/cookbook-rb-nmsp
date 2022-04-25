@@ -46,7 +46,7 @@ sensors:
   <% if !flow_node['redborder'].nil? and
     !flow_node['redborder']['nmsp'].nil? and
     Array(flow_node['redborder']['nmsp']).any? {|v| [true,"true","1",1].include? v } and
-    !flow_node["redborder"]["parent_id"].nil? %>
+    ((role == "manager" and flow_node["redborder"]["parent_id"].nil? ) or (role == "proxy-sensor")) %>
     <% if !flow_node[:ipaddress].nil? and !flow_ips.include?flow_node[:ipaddress] %>
       <% flow_ips << flow_node[:ipaddress] %>
       <% address = flow_node[:ipaddress] %>
