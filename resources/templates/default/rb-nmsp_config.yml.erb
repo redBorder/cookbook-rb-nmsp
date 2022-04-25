@@ -22,7 +22,16 @@ template.push("      sensor_name: \""     + sensor_name + "\"")
 end %>
 <%# End of Sensors template %>
 <%# Variables %>
-<%= role = node.run_list[0].name %>
+<% role = "" %>
+<% node.roles.each do |r| %>
+  <% if r.include? "manager" %>
+    <% role = "manager" %>
+    <% break %>
+  <% elsif r.include? "proxy" %>
+    <% role = "proxy" %>
+    <% break %>
+  <% end %>
+<% end %>
 <% manager_array_of_attributes = %w[sensor_uuid deployment deployment_uuid namespace namespace_uuid market
                                     market_uuid organization organization_uuid service_provider service_provider_uuid
                                     campus campus_uuid building building_uuid floor floor_uuid] %>
@@ -46,7 +55,7 @@ sensors:
   <% if !flow_node['redborder'].nil? and
     !flow_node['redborder']['nmsp'].nil? and
     Array(flow_node['redborder']['nmsp']).any? {|v| [true,"true","1",1].include? v } and
-    ((role == "manager" and flow_node["redborder"]["parent_id"].nil? ) or (role == "proxy-sensor")) %>
+    ((role == "manager" and flow_node["redborder"]["parent_id"].nil? ) or (role == "proxy")) %>
     <% if !flow_node[:ipaddress].nil? and !flow_ips.include?flow_node[:ipaddress] %>
       <% flow_ips << flow_node[:ipaddress] %>
       <% address = flow_node[:ipaddress] %>
@@ -78,7 +87,7 @@ sensors:
       <% when "manager" %>
         <% entries = sensors_template(address, version, client_stats, ap_monitor, index_partitions,
                         index_replicas, sensor_name, port, flow_node, manager_array_of_attributes)%>
-        <% when "proxy-sensor" %>
+        <% when "proxy" %>
           <% entries = sensors_template(address, version, client_stats, ap_monitor, index_partitions,
                         index_replicas, sensor_name, port, flow_node, proxy_array_of_attributes)%>
     <% end %>
