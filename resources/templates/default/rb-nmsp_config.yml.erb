@@ -1,137 +1,125 @@
+<%# Sensors template %>
+<% def sensors_template(address, version, client_stats, ap_monitor, index_partitions,
+                        index_replicas, sensor_name, port, flow_node, array_of_attributes)
+template  =  ['  -']
+template.push("    address: \""           + address + "\"")
+template.push("    port: "                + port) unless port.nil?
+template.push("    version: \""           + version + "\"")
+template.push("    clientStats: "         + client_stats.to_s)
+template.push("    apMonitor: "           + ap_monitor.to_s)
+template.push("    apMonitorSleep: 300") if ap_monitor
+template.push("    enrichment:")
+template.push("      index_partitions: "  + index_partitions.to_s)
+template.push("      index_replicas: "    + index_replicas.to_s)
+template.push("      sensor_name: \""     + sensor_name + "\"")
+
+  array_of_attributes.each do |ss|
+    if !flow_node["redborder"][ss].nil? and flow_node["redborder"][ss]!=""
+      template.push("      " + ss +": \"" + flow_node["redborder"][ss] + "\"")
+    end
+  end
+  template
+end %>
+<%# End of Sensors template %>
+<%# Variables %>
+<%= role = node.run_list[0].name %>
+<% manager_array_of_attributes = %w[sensor_uuid deployment deployment_uuid namespace namespace_uuid market
+                                    market_uuid organization organization_uuid service_provider service_provider_uuid
+                                    campus campus_uuid building building_uuid floor floor_uuid] %>
+<% proxy_array_of_attributes = %w[sensor_uuid deployment deployment_uuid market market_uuid
+                                  campus campus_uuid building building_uuid floor floor_uuid] %>
+<%# End of Variables %>
 zk_connect: '<%= (!@zk_hosts.nil? and @zk_hosts!="") ?  @zk_hosts : "127.0.0.1:2181" %>'
 rssi_limit_db: -85
-<% if node["redborder"]["mode"] %>
-<% if ((node["redborder"]["manager"]["topics"].nil? or node["redborder"]["manager"]["topics"]["rb_flow"].nil? or node["redborder"]["manager"]["topics"]["rb_flow"]=="realtime" or node["redborder"]["manager"]["topics"]["rb_flow"]=="both" or node["redborder"]["manager"]["topics"]["rb_flow"]=="rb-enrich") and (node["redborder"]["license"]["fmodules"].include?"all" or node["redborder"]["license"]["fmodules"].include?"flow")) %>
-psql: true
+psql: <%= role == "manager" ? true : false %>
+<% if (role == "manager") and
+      (node["redborder"]["manager"]["topics"].nil? or
+       node["redborder"]["manager"]["topics"]["rb_flow"].any? {|v| %w[realtime both rb-enrich].include? v }) and
+       node["redborder"]["license"]["fmodules"].any? {|v| %w[all flow].include? v } %>
 psql_uri: "jdbc:postgresql://<%= @db_hostname.nil? ? "postgresql.#{node["redborder"]["cdomain"]}" : @db_hostname %><%= @db_port.nil? ? "" : ":#{@db_port.to_i}" %>/<%= @db_name.nil? ? "redborder" : @db_name %>"
 psql_user: "<%= @db_username %>"
 psql_pass: "<%= @db_pass %>"
 <% end %>
 sensors:
 <% flow_ips = [] %>
-<% @flow_nodes.each_with_index do |flow_node, i| %>
-<% if !flow_node['redborder'].nil? and !flow_node['redborder']['nmsp'].nil? and (flow_node['redborder']['nmsp']==true or flow_node['redborder']['nmsp']=="true" or flow_node['redborder']['nmsp']=="1" or flow_node['redborder']['nmsp']==1) and flow_node["redborder"]["parent_id"].nil? %>
-<% if !flow_node[:ipaddress].nil? and !flow_ips.include?flow_node[:ipaddress] %>
-<% flow_ips << flow_node[:ipaddress] %>
-  -
-    address: "<%= flow_node[:ipaddress] %>"
-    version: "<%= (flow_node["rbversion"].nil? or flow_node["rbversion"]=="") ? "8" : flow_node["rbversion"]  %>"
-<% if flow_node["redborder"]["nmsp_client_stats"] == "1" or flow_node["redborder"]["nmsp_client_stats"] == true or flow_node["redborder"]["nmsp_client_stats"] == 1 %>
-    clientStats: true
-<% else %>
-    clientStats: false
+<% @flow_nodes.each do |flow_node| %>
+  <% if !flow_node['redborder'].nil? and
+    !flow_node['redborder']['nmsp'].nil? and
+    Array(flow_node['redborder']['nmsp']).any? {|v| [true,"true","1",1].include? v } and
+    !flow_node["redborder"]["parent_id"].nil? %>
+    <% if !flow_node[:ipaddress].nil? and !flow_ips.include?flow_node[:ipaddress] %>
+      <% flow_ips << flow_node[:ipaddress] %>
+      <% address = flow_node[:ipaddress] %>
+      <% port = nil %>
+    <% elsif !flow_node["redborder"]["forwards_to_client"].nil? and
+             !flow_node["redborder"]["forwards_to_client"]["nmsp"].nil? and
+             !flow_node["redborder"]["forwards_to_client"]["nmsp"]["port"].nil? and
+             !flow_node["redborder"]["secgw_ipaddress"].nil? and
+             !flow_node["redborder"]["cloud_proxy_id"].nil? %>
+      <% nmsp_ip=Chef::Node.load("rbcp-#{flow_node["redborder"]["cloud_proxy_id"]}")["redborder"]["ipsync"] rescue nmsp_ip=nil %>
+      <% if !nmsp_ip.nil? and
+            !flow_node["redborder"]["nmsp_managed_cp"].nil? and
+             flow_node["redborder"]["nmsp_managed_cp"].to_i == 0 %>
+        <% address = nmsp_ip %>
+        <% port = flow_node["redborder"]["forwards_to_client"]["nmsp"]["port"] %>
+      <% end %>
+    <% end %>
+    <% version = (flow_node["rbversion"].nil? or flow_node["rbversion"]=="") ? "8" : flow_node["rbversion"] %>
+    <% client_stats = Array(flow_node["redborder"]["nmsp_client_stats"]).any? {|v| [true,"true","1",1].include? v } %>
+    <% ap_monitor =  Array(flow_node["redborder"]["nmsp_wireless_health"]).any? {|v| [true,"true","1",1].include? v } %>
+    <% index_partitions = [ 1, (!flow_node["redborder"].nil? and
+                                !flow_node["redborder"]["index_partitions"].nil?) ?
+                                   flow_node["redborder"]["index_partitions"].to_i : 5 ].max %>
+    <% index_replicas = [ 1, (!flow_node["redborder"].nil? and
+                              !flow_node["redborder"]["index_replicas"].nil? ) ?
+                                   flow_node["redborder"]["index_replicas"].to_i : 1 ].max %>
+    <% sensor_name = flow_node["rbname"].nil? ? flow_node.name : flow_node["rbname"] %>
+    <% case role %>
+      <% when "manager" %>
+        <% entries = sensors_template(address, version, client_stats, ap_monitor, index_partitions,
+                        index_replicas, sensor_name, port, flow_node, manager_array_of_attributes)%>
+        <% when "proxy-sensor" %>
+          <% entries = sensors_template(address, version, client_stats, ap_monitor, index_partitions,
+                        index_replicas, sensor_name, port, flow_node, proxy_array_of_attributes)%>
+    <% end %>
+    <% entries.each do | entry | %>
+<%= entry %>
+    <% end %>
+  <% end %>
 <% end %>
-<% if flow_node["redborder"]["nmsp_wireless_health"] == "1" or flow_node["redborder"]["nmsp_wireless_health"] == true or flow_node["redborder"]["nmsp_wireless_health"] == 1 %>
-    apMonitor: true
-    apMonitorSleep: 300
-<% else %>
-    apMonitor: false
-<% end %>
-    enrichment:
-      index_partitions: <%= [ 1, ( !flow_node["redborder"].nil? and !flow_node["redborder"]["index_partitions"].nil? ) ? flow_node["redborder"]["index_partitions"].to_i : 5].max %>
-      index_replicas: <%= [ 1, ( !flow_node["redborder"].nil? and !flow_node["redborder"]["index_replicas"].nil? ) ? flow_node["redborder"]["index_replicas"].to_i : 1].max %>
-      sensor_name: "<%= flow_node["rbname"].nil? ? flow_node.name : flow_node["rbname"] %>"
-<% ["sensor_uuid", "deployment", "deployment_uuid", "namespace", "namespace_uuid", "market", "market_uuid", "organization", "organization_uuid", "service_provider", "service_provider_uuid", "campus", "campus_uuid", "building", "building_uuid", "floor", "floor_uuid" ].each do |ss| %>
-<% if !flow_node["redborder"][ss].nil? and flow_node["redborder"][ss]!="" %>
-      <%= ss %>: "<%= flow_node["redborder"][ss] %>"
-<% end %>
-<% end %>
-<% elsif false and !flow_node["redborder"]["forwards_to_client"].nil? and !flow_node["redborder"]["forwards_to_client"]["nmsp"].nil? and !flow_node["redborder"]["forwards_to_client"]["nmsp"]["port"].nil? and !flow_node["redborder"]["secgw_ipaddress"].nil? and !flow_node["redborder"]["cloud_proxy_id"].nil? %>
-<% nmsp_ip=Chef::Node.load("rbcp-#{flow_node["redborder"]["cloud_proxy_id"]}")["redborder"]["ipsync"] rescue nmsp_ip=nil %>
-<% if !nmsp_ip.nil? and !flow_node["redborder"]["nmsp_managed_cp"].nil? and flow_node["redborder"]["nmsp_managed_cp"].to_i == 0 %>
-  -
-    address: "<%= nmsp_ip %>"
-    port: <%= flow_node["redborder"]["forwards_to_client"]["nmsp"]["port"] %>
-    version: "<%= (flow_node["rbversion"].nil? or flow_node["rbversion"]=="") ? "8" : flow_node["rbversion"]  %>"
-<% if flow_node["redborder"]["nmsp_client_stats"] == "1" or flow_node["redborder"]["nmsp_client_stats"] == true or flow_node["redborder"]["nmsp_client_stats"] == 1 %>
-    clientStats: true
-<% else %>
-    clientStats: false
-<% end %>
-<% if flow_node["redborder"]["nmsp_wireless_health"] == "1" or flow_node["redborder"]["nmsp_wireless_health"] == true or flow_node["redborder"]["nmsp_wireless_health"] == 1 %>
-    apMonitor: true
-    apMonitorSleep: 300
-<% else %>
-    apMonitor: false
-<% end %>
-    enrichment:
-      index_partitions: <%= [ 1, ( !flow_node["redborder"].nil? and !flow_node["redborder"]["index_partitions"].nil? ) ? flow_node["redborder"]["index_partitions"].to_i : 5].max %>
-      index_replicas: <%= [ 1, ( !flow_node["redborder"].nil? and !flow_node["redborder"]["index_replicas"].nil? ) ? flow_node["redborder"]["index_replicas"].to_i : 1].max %>
-      sensor_name: "<%= flow_node["rbname"].nil? ? flow_node.name : flow_node["rbname"] %>"
-<% ["sensor_uuid", "deployment", "deployment_uuid", "namespace", "namespace_uuid", "market", "market_uuid", "organization", "organization_uuid", "service_provider", "service_provider_uuid", "campus", "campus_uuid", "building", "building_uuid", "floor", "floor_uuid" ].each do |ss| %>
-<% if !flow_node["redborder"][ss].nil? and flow_node["redborder"][ss]!="" %>
-      <%= ss %>: "<%= flow_node["redborder"][ss] %>"
-<% end %>
-<% end %>
-<% end %>
-<% end %>
-<% end %>
-<% end %>
-<% @cloudproxy_nodes.each_with_index do |cp_node, i| %>
-<% cp_node = cp_node[1] %>
-<% if !cp_node["redborder"].nil? and !cp_node["redborder"]["ipsync"].nil? and !cp_node["redborder"]["ipsync"].empty? and !cp_node["redborder"]["tunnels"].nil? and !cp_node["ohai_time"].nil? %>
-<% cp_node["redborder"]["tunnels"].each do |secgw_name, secgw| %>
-<% secgw["sensors_mapping"].each do |sensor_name, flow_node| %>
-<% if !flow_node.nil? and !flow_node["forwards_to_client"].nil? and !flow_node["forwards_to_client"]["nmsp"].nil? and !flow_node["forwards_to_client"]["nmsp"]["port"].nil? and !flow_node['nmsp'].nil? and (flow_node['nmsp']==true or flow_node['nmsp']=="true" or flow_node['nmsp']=="1" or flow_node['nmsp']==1) and !flow_node["nmsp_managed_cp"].nil? and flow_node["nmsp_managed_cp"].to_i == 0 %>
-  -
-    address: "<%= cp_node["redborder"]["ipsync"] %>"
-    port: <%= flow_node["forwards_to_client"]["nmsp"]["port"] %>
-    version: "<%= (flow_node["rbversion"].nil? or flow_node["rbversion"]=="") ? "8" : flow_node["rbversion"]  %>"
-<% if flow_node["nmsp_client_stats"] == "1" or flow_node["nmsp_client_stats"] == true or flow_node["nmsp_client_stats"] == 1 %>
-    clientStats: true
-<% else %>
-    clientStats: false
-<% end %>
-<% if flow_node["nmsp_wireless_health"] == "1" or flow_node["nmsp_wireless_health"] == true or flow_node["nmsp_wireless_health"] == 1 %>
-    apMonitor: true
-    apMonitorSleep: 300
-<% else %>
-    apMonitor: false
-<% end %>
-    enrichment:
-      index_partitions: <%= [ 1, ( !flow_node["redborder"].nil? and !flow_node["redborder"]["index_partitions"].nil? ) ? flow_node["redborder"]["index_partitions"].to_i : 5].max %>
-      index_replicas: <%= [ 1, ( !flow_node["redborder"].nil? and !flow_node["redborder"]["index_replicas"].nil? ) ? flow_node["redborder"]["index_replicas"].to_i : 1].max %>
-      sensor_name: "<%= sensor_name %>"
-<% ["sensor_uuid", "deployment", "deployment_uuid", "namespace", "namespace_uuid", "market", "market_uuid", "organization", "organization_uuid", "service_provider", "service_provider_uuid", "campus", "campus_uuid", "building", "building_uuid", "floor", "floor_uuid" ].each do |ss| %>
-<% if !flow_node[ss].nil? and flow_node[ss]!="" %>
-      <%= ss %>: "<%= flow_node[ss] %>"
-<% end %>
-<% end %>
-<% end %>
-<% end if !secgw["sensors_mapping"].nil? %>
-<% end %>
-<% end %>
-<% end %>
-<% else %>
-psql: false
-sensors:
-<% flow_ips = [] %>
-<% if !node["redborder"].nil? and !node["redborder"]["sensors_mapping"].nil? and !node["redborder"]["sensors_mapping"]["flow"].nil? and node["redborder"]["sensors_mapping"]["flow"].size > 0 and !node["redborder"]["nmsp"].nil? and !node["redborder"]["nmsp"]["macAddress"].nil? and !node["redborder"]["nmsp"].empty? and !node["redborder"]["nmsp"]["macAddress"].empty? %>
-  <% node["redborder"]["sensors_mapping"]["flow"].each do |rbname, flow_node| %>
-  <% if !flow_node.nil? and !flow_node['nmsp'].nil? and (flow_node['nmsp']==true or flow_node['nmsp']=="true" or flow_node['nmsp']=="1" or flow_node['nmsp']==1) and !flow_node["ipaddress"].nil? and !flow_ips.include?flow_node["ipaddress"]%>
-  <% flow_ips << flow_node["ipaddress"] %>
-  -
-    address: "<%= flow_node["ipaddress"] %>"
-    version: "<%= (flow_node["rbversion"].nil? or flow_node["rbversion"]=="") ? "8" : flow_node["rbversion"]  %>"
-<% if flow_node["nmsp_client_stats"] == "1" or flow_node["nmsp_client_stats"] == true or flow_node["nmsp_client_stats"] == 1 %>
-    clientStats: true
-<% else %>
-    clientStats: false
-<% end %>
-<% if flow_node["nmsp_wireless_health"] == "1" or flow_node["nmsp_wireless_health"] == true or flow_node["nmsp_wireless_health"] == 1 %>
-    apMonitor: true
-    apMonitorSleep: 300
-<% else %>
-    apMonitor: false
-<% end %>
-    enrichment:
-      sensor_name: "<%= rbname %>"
-<% ["sensor_uuid", "deployment", "deployment_uuid", "market", "market_uuid", "campus", "campus_uuid", "building", "building_uuid", "floor", "floor_uuid"].each do |ss| %>
-<% if !flow_node[ss].nil? and flow_node[ss]!="" %>
-      <%= ss %>: "<%= flow_node[ss] %>"
-<% end %>
-<% end %>
-<% end %>
-<% end %>
-<% end %>
+<% @cloudproxy_nodes.each do |cp_node| %>              <%# #TODO When ipsync is done %>
+  <% if !cp_node["redborder"].nil? and
+        !cp_node["redborder"]["ipsync"].nil? and       #TODO Add ipsync
+        !cp_node["redborder"]["ipsync"].empty? and
+        !cp_node["redborder"]["tunnels"].nil? and      #TODO Add tunnels
+        !cp_node["ohai_time"].nil? %>
+    <% cp_node["redborder"]["tunnels"].each do |_, secgw| %>
+      <% secgw["sensors_mapping"].each do |sensor_name, flow_node| %>
+        <% if !flow_node.nil? and
+              !flow_node["forwards_to_client"].nil? and
+              !flow_node["forwards_to_client"]["nmsp"].nil? and
+              !flow_node["forwards_to_client"]["nmsp"]["port"].nil? and
+              !flow_node['nmsp'].nil? and
+              Array(flow_node['nmsp']).any? {|v| [true,"true","1",1].include? v } and
+              !flow_node["nmsp_managed_cp"].nil? and
+              flow_node["nmsp_managed_cp"].to_i == 0 %>
+          <% address = cp_node["redborder"]["ipsync"] %>
+          <% port = flow_node["forwards_to_client"]["nmsp"]["port"] %>
+          <% version = (flow_node["rbversion"].nil? or flow_node["rbversion"]=="") ? "8" : flow_node["rbversion"] %>
+          <% client_stats = Array(flow_node["redborder"]["nmsp_client_stats"]).any? {|v| [true,"true","1",1].include? v } %>
+          <% ap_monitor =  Array(flow_node["redborder"]["nmsp_wireless_health"]).any? {|v| [true,"true","1",1].include? v } %>
+          <% index_partitions = [ 1, (!flow_node["redborder"].nil? and
+                                      !flow_node["redborder"]["index_partitions"].nil?) ?
+                                         flow_node["redborder"]["index_partitions"].to_i : 5 ].max %>
+          <% index_replicas = [ 1, (!flow_node["redborder"].nil? and
+                                    !flow_node["redborder"]["index_replicas"].nil? ) ?
+                                         flow_node["redborder"]["index_replicas"].to_i : 1 ].max %>
+          <% sensors_template(address, version, client_stats, ap_monitor, index_partitions,
+                              index_replicas, sensor_name, port, flow_node, manager_array_of_attributes).each do | entry | %>
+<%= entry %>
+          <% end %>
+        <% end %>
+      <% end unless secgw["sensors_mapping"].nil? %>
+    <% end %>
+  <% end %>
 <% end %>
