@@ -9,7 +9,7 @@ action :add do
     proxy_nodes = new_resource.proxy_nodes
     memory = new_resource.memory
     hosts = new_resource.hosts
-    mode = new_resource.config_dir
+    mode = new_resource.mode
 
     yum_package "redborder-nmsp" do
       action :upgrade
