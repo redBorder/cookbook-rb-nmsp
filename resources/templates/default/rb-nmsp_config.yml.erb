@@ -22,16 +22,6 @@ template.push("      sensor_name: \""     + sensor_name + "\"")
 end %>
 <%# End of Sensors template %>
 <%# Variables %>
-<% role = "" %>
-<% node.roles.each do |r| %>
-  <% if r.include? "manager" %>
-    <% role = "manager" %>
-    <% break %>
-  <% elsif r.include? "proxy" %>
-    <% role = "proxy" %>
-    <% break %>
-  <% end %>
-<% end %>
 <% manager_array_of_attributes = %w[sensor_uuid deployment deployment_uuid namespace namespace_uuid market
                                     market_uuid organization organization_uuid service_provider service_provider_uuid
                                     campus campus_uuid building building_uuid floor floor_uuid] %>
@@ -40,8 +30,8 @@ end %>
 <%# End of Variables %>
 zk_connect: '<%= (!@zk_hosts.nil? and @zk_hosts!="") ?  @zk_hosts : "127.0.0.1:2181" %>'
 rssi_limit_db: -85
-psql: <%= role == "manager" ? true : false %>
-<% if (role == "manager") and
+psql: <%= @mode == "manager" ? true : false %>
+<% if (@mode == "manager") and
       (node["redborder"]["manager"]["topics"].nil? or
        node["redborder"]["manager"]["topics"]["rb_flow"].any? {|v| %w[realtime both rb-enrich].include? v }) and
        node["redborder"]["license"]["fmodules"].any? {|v| %w[all flow].include? v } %>
@@ -55,7 +45,7 @@ sensors:
   <% if !flow_node['redborder'].nil? and
     !flow_node['redborder']['nmsp'].nil? and
     Array(flow_node['redborder']['nmsp']).any? {|v| [true,"true","1",1].include? v } and
-    ((role == "manager" and flow_node["redborder"]["parent_id"].nil? ) or (role == "proxy")) %>
+    ((@mode == "manager" and flow_node["redborder"]["parent_id"].nil? ) or (@mode == "proxy")) %>
     <% if !flow_node[:ipaddress].nil? and !flow_ips.include?flow_node[:ipaddress] %>
       <% flow_ips << flow_node[:ipaddress] %>
       <% address = flow_node[:ipaddress] %>
@@ -83,7 +73,7 @@ sensors:
                               !flow_node["redborder"]["index_replicas"].nil? ) ?
                                    flow_node["redborder"]["index_replicas"].to_i : 1 ].max %>
     <% sensor_name = flow_node["rbname"].nil? ? flow_node.name : flow_node["rbname"] %>
-    <% case role %>
+    <% case @mode %>
       <% when "manager" %>
         <% entries = sensors_template(address, version, client_stats, ap_monitor, index_partitions,
                         index_replicas, sensor_name, port, flow_node, manager_array_of_attributes)%>

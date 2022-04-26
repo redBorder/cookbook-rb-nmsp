@@ -14,4 +14,5 @@ attribute :flow_nodes, :kind_of => Array, :default => []
 attribute :proxy_nodes, :kind_of => Array, :default => []
 attribute :memory, :kind_of => Fixnum, :default => 0
 attribute :hosts, :kind_of => Object
+attribute :mode, :kind_of => String, :default => "manager"
 
