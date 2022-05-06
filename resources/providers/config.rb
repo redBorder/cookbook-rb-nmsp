@@ -9,6 +9,7 @@ action :add do
     proxy_nodes = new_resource.proxy_nodes
     memory = new_resource.memory
     hosts = new_resource.hosts
+    mode = new_resource.mode
 
     yum_package "redborder-nmsp" do
       action :upgrade
@@ -46,7 +47,8 @@ action :add do
                 :db_hostname => db_redborder["hostname"],
                 :db_pass => psql_password,
                 :db_username => psql_user,
-                :db_port => psql_port)
+                :db_port => psql_port,
+                :mode => mode)
       notifies :restart, 'service[redborder-nmsp]', :delayed
       action :create
     end
