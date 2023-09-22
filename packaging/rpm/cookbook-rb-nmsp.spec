@@ -22,12 +22,12 @@ Requires: java
 %build
 
 %install
-mkdir -p %{buildroot}{cookbook_path}
+mkdir -p %{buildroot}%{cookbook_path}
 mkdir -p %{buildroot}/usr/lib64/rb-nmsp
 
-cp -f -r  resources/* %{buildroot}{cookbook_path}
-chmod -R 0755 %{buildroot}/var/chef/cookbooks/rb-nmsp
-install -D -m 0644 README.md %{buildroot}{cookbook_path}/README.md
+cp -f -r  resources/* %{buildroot}%{cookbook_path}
+chmod -R 0755 %{buildroot}%{cookbook_path}
+install -D -m 0644 README.md %{buildroot}%{cookbook_path}/README.md
 
 %pre
 
@@ -44,11 +44,12 @@ case "$1" in
 esac
 
 systemctl daemon-reload
+
 %files
 %defattr(0755,root,root)
-/{cookbook_path}
+%{cookbook_path}
 %defattr(0644,root,root)
-{cookbook_path}/README.md
+%{cookbook_path}/README.md
 
 %doc
 
@@ -56,5 +57,5 @@ systemctl daemon-reload
 * Fri Sep 22 2023 Miguel Negrón <manegron@redborder.com> - 1.0.0-1
 - Adapt cookbook_path
 
-* Fri Dec 15 2021 Eduardo Reyes <eareyes@redborder.com>- 0.0.1
+* Fri Dec 15 2021 Eduardo Reyes <eareyes@redborder.com> - 0.0.1
 - first spec version
