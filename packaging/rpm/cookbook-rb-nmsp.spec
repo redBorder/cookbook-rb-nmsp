@@ -28,7 +28,7 @@ mkdir -p %{buildroot}/usr/lib64/rb-nmsp
 cp -f -r  resources/* %{buildroot}%{cookbook_path}
 chmod -R 0755 %{buildroot}%{cookbook_path}
 install -D -m 0644 README.md %{buildroot}%{cookbook_path}/README.md
-
+install -D -m 0644 debugsourcefiles.list %{buildroot}%{cookbook_path}/debugsourcefiles.list
 %pre
 
 %post
