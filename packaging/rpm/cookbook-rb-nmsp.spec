@@ -50,6 +50,8 @@ systemctl daemon-reload
 %{cookbook_path}
 %defattr(0644,root,root)
 %{cookbook_path}/README.md
+%{cookbook_path}/debugsourcefiles.list
+
 
 %doc
 
