@@ -1,6 +1,8 @@
 Name:     cookbook-rb-nmsp
 Version:  %{__version}
 Release:  %{__release}%{?dist}
+BuildArch: noarch
+Summary: nmsp cookbook to install and configure it in redborder environments
 
 License:  GNU AGPLv3
 URL:  https://github.com/redBorder/cookbook-rb-nmsp
@@ -8,7 +10,6 @@ Source0: %{name}-%{version}.tar.gz
 
 BuildRequires: maven java-devel
 
-Summary: nmsp cookbook to install and configure it in redborder environments
 Requires: java
 
 %description
@@ -51,5 +52,7 @@ systemctl daemon-reload
 %doc
 
 %changelog
-* Fri Dec 15 2021 Eduardo Reyes <eareyes@redborder.com>- 0.0.1
+* Thu Sep 26 2023 Miguel Negrón <manegro@redborder.com> - 0.0.5
+- add noarch to spec file
+* Fri Dec 15 2021 Eduardo Reyes <eareyes@redborder.com> - 0.0.1
 - first spec version
