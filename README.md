@@ -3,7 +3,7 @@
 Cookbook to install and configure redborder rb-nmsp
 ### Platforms
 
-- Centos 7
+- Rocky Linux 9
 
 ### Chef
 
