@@ -52,7 +52,7 @@ systemctl daemon-reload
 %doc
 
 %changelog
-* Thu Sep 26 2023 Miguel Negrón <manegro@redborder.com> - 0.0.5
+* Thu Sep 26 2023 Miguel Negrón <manegro@redborder.com> - 0.0.6
 - add noarch to spec file
 * Fri Dec 15 2021 Eduardo Reyes <eareyes@redborder.com> - 0.0.1
 - first spec version
