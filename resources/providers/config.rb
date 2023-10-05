@@ -11,7 +11,7 @@ action :add do
     hosts = new_resource.hosts
     mode = new_resource.mode
 
-    yum_package "redborder-nmsp" do
+    dnf_package "redborder-nmsp" do
       action :upgrade
       flush_cache[:before]
     end
