@@ -119,7 +119,7 @@ action :register do #Usually used to register in consul
         action :nothing
       end.run_action(:run)
 
-      node.default["rb-nmsp"]["registered"] = true
+      node.normal["rb-nmsp"]["registered"] = true
     end
     Chef::Log.info("rb-nmsp service has been registered in consul")
   rescue => e
@@ -135,7 +135,7 @@ action :deregister do #Usually used to deregister from consul
         action :nothing
       end.run_action(:run)
 
-      node.default["rb-nmsp"]["registered"] = false
+      node.normal["rb-nmsp"]["registered"] = false
     end
     Chef::Log.info("rb-nmsp service has been deregistered from consul")
   rescue => e
