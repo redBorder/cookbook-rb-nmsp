@@ -1,3 +1,5 @@
+%global cookbook_path /var/chef/cookbooks/rb-nmsp
+
 Name:     cookbook-rb-nmsp
 Version:  %{__version}
 Release:  %{__release}%{?dist}
@@ -15,18 +17,20 @@ Requires: java
 %description
 %{summary}
 
+%global debug_package %{nil}
+
 %prep
 %setup -qn %{name}-%{version}
 
 %build
 
 %install
-mkdir -p %{buildroot}/var/chef/cookbooks/rb-nmsp
+mkdir -p %{buildroot}%{cookbook_path}
 mkdir -p %{buildroot}/usr/lib64/rb-nmsp
 
-cp -f -r  resources/* %{buildroot}/var/chef/cookbooks/rb-nmsp/
-chmod -R 0755 %{buildroot}/var/chef/cookbooks/rb-nmsp
-install -D -m 0644 README.md %{buildroot}/var/chef/cookbooks/rb-nmsp/README.md
+cp -f -r  resources/* %{buildroot}%{cookbook_path}
+chmod -R 0755 %{buildroot}%{cookbook_path}
+install -D -m 0644 README.md %{buildroot}%{cookbook_path}/README.md
 
 %pre
 
@@ -43,11 +47,12 @@ case "$1" in
 esac
 
 systemctl daemon-reload
+
 %files
 %defattr(0755,root,root)
-/var/chef/cookbooks/rb-nmsp
+%{cookbook_path}
 %defattr(0644,root,root)
-/var/chef/cookbooks/rb-nmsp/README.md
+%{cookbook_path}/README.md
 
 %doc
 

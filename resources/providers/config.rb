@@ -11,7 +11,7 @@ action :add do
     hosts = new_resource.hosts
     mode = new_resource.mode
 
-    yum_package "redborder-nmsp" do
+    dnf_package "redborder-nmsp" do
       action :upgrade
       flush_cache[:before]
     end
@@ -119,7 +119,7 @@ action :register do #Usually used to register in consul
         action :nothing
       end.run_action(:run)
 
-      node.set["redborder-nmsp"]["registered"] = true
+      node.normal["rb-nmsp"]["registered"] = true
     end
     Chef::Log.info("redborder-nmsp service has been registered in consul")
   rescue => e
@@ -135,7 +135,7 @@ action :deregister do #Usually used to deregister from consul
         action :nothing
       end.run_action(:run)
 
-      node.set["redborder-nmsp"]["registered"] = false
+      node.normal["rb-nmsp"]["registered"] = false
     end
     Chef::Log.info("redborder-nmsp service has been deregistered from consul")
   rescue => e
