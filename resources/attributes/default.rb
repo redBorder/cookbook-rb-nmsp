@@ -1,4 +1,2 @@
-#default attributes
-#
-
-default["redborder-nmsp"]["registered"] = false
+# default attributes
+default['redborder-nmsp']['registered'] = false
