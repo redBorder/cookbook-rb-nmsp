@@ -33,6 +33,9 @@ chmod -R 0755 %{buildroot}%{cookbook_path}
 install -D -m 0644 README.md %{buildroot}%{cookbook_path}/README.md
 
 %pre
+if [ -d /var/chef/cookbooks/rb-nmsp ]; then
+    rm -rf /var/chef/cookbooks/rb-nmsp
+fi
 
 %post
 case "$1" in
@@ -48,6 +51,12 @@ esac
 
 systemctl daemon-reload
 
+%postun
+# Deletes directory when uninstall the package
+if [ "$1" = 0 ] && [ -d /var/chef/cookbooks/rb-nmsp ]; then
+  rm -rf /var/chef/cookbooks/rb-nmsp
+fi
+
 %files
 %defattr(0755,root,root)
 %{cookbook_path}
@@ -57,7 +66,11 @@ systemctl daemon-reload
 %doc
 
 %changelog
-* Thu Sep 26 2023 Miguel Negrón <manegro@redborder.com> - 0.0.6
+* Thu Oct 10 2024 Miguel Negrón <manegron@redborder.com>
+- Add pre and postun
+
+* Thu Sep 26 2023 Miguel Negrón <manegro@redborder.com>
 - add noarch to spec file
-* Fri Dec 15 2021 Eduardo Reyes <eareyes@redborder.com> - 0.0.1
+
+* Fri Dec 15 2021 Eduardo Reyes <eareyes@redborder.com>
 - first spec version
