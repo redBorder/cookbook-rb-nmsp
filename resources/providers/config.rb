@@ -12,7 +12,6 @@ action :add do
 
     dnf_package 'redborder-nmsp' do
       action :upgrade
-      flush_cache[:before]
     end
 
     directory config_dir do
