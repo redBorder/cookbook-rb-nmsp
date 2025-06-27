@@ -1,6 +1,11 @@
 cookbook-rb-nmsp CHANGELOG
 ===============
 
+## 0.0.11
+
+  - nilsver
+    - [d474703] remove flush cache
+
 ## 0.0.10
 
   - Miguel Negrón
