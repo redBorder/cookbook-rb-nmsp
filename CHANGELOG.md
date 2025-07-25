@@ -1,6 +1,11 @@
 cookbook-rb-nmsp CHANGELOG
 ===============
 
+## 0.0.12
+
+  - jnavarrorb
+    - [caaa30e] Remove executable permissions on non-executable files
+
 ## 0.0.11
 
   - nilsver
