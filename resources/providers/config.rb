@@ -23,7 +23,7 @@ action :add do
 
     # Retrieve databag data
     begin
-      db_redborder = data_bag_item('passwords', 'db_redborder')
+      db_redborder = data_bag_item('passwords', 'db_redborder', '/etc/chef/encrypted_data_bag_secret').to_hash
     rescue
       db_redborder = {}
     end
