@@ -1,6 +1,11 @@
 cookbook-rb-nmsp CHANGELOG
 ===============
 
+## 0.0.13
+
+  - Rafael Gomez
+    - [7728b30] Load the db_redborder data bag using /etc/chef/encrypted_data_bag_secret file
+
 ## 0.0.12
 
   - jnavarrorb
