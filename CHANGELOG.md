@@ -1,6 +1,11 @@
 cookbook-rb-nmsp CHANGELOG
 ===============
 
+## 0.0.14
+
+  - manegron
+    - [3f4e19a] Upload cookbook only if opscode-erchef is active
+
 ## 0.0.13
 
   - Rafael Gomez
