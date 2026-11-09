@@ -9,6 +9,8 @@ attribute :kafka_topic, kind_of: String, default: 'rb_nmsp'
 attribute :name, kind_of: String, default: 'localhost'
 attribute :ip, kind_of: String, default: '127.0.0.1'
 attribute :flow_nodes, kind_of: Array, default: []
+# true: the database password comes from OpenBao (config.yml rendered by the agent into /run)
+attribute :openbao, kind_of: [TrueClass, FalseClass], default: false
 attribute :proxy_nodes, kind_of: Array, default: []
 attribute :memory, kind_of: Integer, default: 0
 attribute :hosts, kind_of: Object

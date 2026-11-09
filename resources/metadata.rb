@@ -4,3 +4,5 @@ maintainer_email 'git@redborder.com'
 license          'AGPL-3.0'
 description      'Installs/Configures cookbook-rb-nmsp'
 version          '0.0.14'
+
+depends 'openbao'
