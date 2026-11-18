@@ -32,7 +32,6 @@ action :add do
     unless db_redborder.empty?
       psql_name = db_redborder['database']
       psql_user = db_redborder['username']
-      # OpenBao: placeholder, the agent fills in the password in /run
       psql_password = openbao ? OpenBao.ref('db_redborder', 'pass') : db_redborder['pass']
       psql_port = db_redborder['port']
     end
