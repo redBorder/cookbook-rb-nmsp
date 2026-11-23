@@ -21,7 +21,6 @@ action :add do
       action :create
     end
 
-    openbao = new_resource.openbao
     # Retrieve databag data
     begin
       db_redborder = data_bag_item('passwords', 'db_redborder', '/etc/chef/encrypted_data_bag_secret').to_hash
@@ -32,54 +31,32 @@ action :add do
     unless db_redborder.empty?
       psql_name = db_redborder['database']
       psql_user = db_redborder['username']
-      psql_password = openbao ? OpenBao.ref('db_redborder', 'pass') : db_redborder['pass']
+      psql_password = OpenBao.ref('db_redborder', 'pass')
       psql_port = db_redborder['port']
     end
 
-    if openbao
-      openbao_secret_file 'redborder-nmsp-config' do
-        source 'rb-nmsp_config.yml.erb'
-        cookbook 'rbnmsp'
-        variables(zk_hosts: hosts,
-                  flow_nodes: flow_nodes,
-                  cloudproxy_nodes: proxy_nodes,
-                  db_name: psql_name,
-                  db_hostname: db_redborder['hostname'],
-                  db_pass: psql_password,
-                  db_username: psql_user,
-                  db_port: psql_port,
-                  mode: mode)
-        destination '/run/rb-secrets/redborder-nmsp/config.yml'
-        owner 'root'
-        group 'root'
-        mode '0600'
-        unit 'redborder-nmsp'
-      end
+    openbao_secret_file 'redborder-nmsp-config' do
+      source 'rb-nmsp_config.yml.erb'
+      cookbook 'rbnmsp'
+      variables(zk_hosts: hosts,
+                flow_nodes: flow_nodes,
+                cloudproxy_nodes: proxy_nodes,
+                db_name: psql_name,
+                db_hostname: db_redborder['hostname'],
+                db_pass: psql_password,
+                db_username: psql_user,
+                db_port: psql_port,
+                mode: mode)
+      destination '/run/rb-secrets/redborder-nmsp/config.yml'
+      owner 'root'
+      group 'root'
+      mode '0600'
+      unit 'redborder-nmsp'
+    end
 
-      link '/etc/redborder-nmsp/config.yml' do
-        to '/run/rb-secrets/redborder-nmsp/config.yml'
-        notifies :restart, 'service[redborder-nmsp]', :delayed
-      end
-    else
-      template '/etc/redborder-nmsp/config.yml' do
-        source 'rb-nmsp_config.yml.erb'
-        cookbook 'rbnmsp'
-        owner 'root'
-        group 'root'
-        mode '0644'
-        retries 2
-        variables(zk_hosts: hosts,
-                  flow_nodes: flow_nodes,
-                  cloudproxy_nodes: proxy_nodes,
-                  db_name: psql_name,
-                  db_hostname: db_redborder['hostname'],
-                  db_pass: psql_password,
-                  db_username: psql_user,
-                  db_port: psql_port,
-                  mode: mode)
-        notifies :restart, 'service[redborder-nmsp]', :delayed
-        action :create
-      end
+    link '/etc/redborder-nmsp/config.yml' do
+      to '/run/rb-secrets/redborder-nmsp/config.yml'
+      notifies :restart, 'service[redborder-nmsp]', :delayed
     end
 
     template '/etc/sysconfig/redborder-nmsp' do
