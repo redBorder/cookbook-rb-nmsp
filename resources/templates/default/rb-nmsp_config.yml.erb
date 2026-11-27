@@ -2,12 +2,12 @@
 <% def sensors_template(address, version, client_stats, ap_monitor, index_partitions,
                         index_replicas, sensor_name, port, flow_node, array_of_attributes)
 template  =  ['  -']
-template.push("    address: \""           + address + "\"")
-template.push("    port: "                + port) unless port.nil?
+template.push("    name: \""              + sensor_name + "\"")
+template.push("    ip: \""                + address + "\"")
+template.push("    port: "                + (port || 16113).to_s)
 template.push("    version: \""           + version + "\"")
 template.push("    clientStats: "         + client_stats.to_s)
 template.push("    apMonitor: "           + ap_monitor.to_s)
-template.push("    apMonitorSleep: 300") if ap_monitor
 template.push("    enrichment:")
 template.push("      index_partitions: "  + index_partitions.to_s)
 template.push("      index_replicas: "    + index_replicas.to_s)
@@ -28,17 +28,52 @@ end %>
 <% proxy_array_of_attributes = %w[sensor_uuid deployment deployment_uuid market market_uuid
                                   campus campus_uuid building building_uuid floor floor_uuid] %>
 <%# End of Variables %>
-zk_connect: '<%= (!@zk_hosts.nil? and @zk_hosts!="") ?  @zk_hosts : "127.0.0.1:2181" %>'
-rssi_limit_db: -85
-psql: <%= @mode == "manager" ? true : false %>
-<% if (@mode == "manager") and
-      (node["redborder"]["manager"]["topics"].nil? or
-       node["redborder"]["manager"]["topics"]["rb_flow"].any? {|v| %w[realtime both rb-enrich].include? v }) and
-       node["redborder"]["license"]["fmodules"].any? {|v| %w[all flow].include? v } %>
-psql_uri: "jdbc:postgresql://<%= @db_hostname.nil? ? "postgresql.#{node["redborder"]["cdomain"]}" : @db_hostname %><%= @db_port.nil? ? "" : ":#{@db_port.to_i}" %>/<%= @db_name.nil? ? "redborder" : @db_name %>"
-psql_user: "<%= @db_username %>"
-psql_pass: "<%= @db_pass %>"
+server:
+  listen_addr: ":16113"
+  enable_tls: true
+  tls_min_version: "1.0"
+  cert_path: "/etc/redborder-nmsp/ssl"
+  keystore_path: "/etc/redborder-nmsp/aes.keystore"
+  stats_socket: "/run/redborder-nmsp/redborder-nmsp.sock"
+  stats_http_addr: "127.0.0.1:8086"
+
+logging:
+  level: "info"
+  format: "text"
+
+telemetry:
+  measurements: true
+  client_info: true
+  client_stats: true
+  ap_monitor: true
+  wireless_ids: false
+  spectrum: false
+  roaming_events: false
+  iot_tags: false
+
+kafka:
+  brokers:
+<% if !node["redborder"].nil? and !node["redborder"]["kafka"].nil? and !node["redborder"]["kafka"]["broker"].nil? %>
+    - "<%= node["redborder"]["kafka"]["broker"] %>:9092"
+<% else %>
+    - "localhost:9092"
 <% end %>
+  topic_nmsp: "rb_nmsp"
+  topic_flow: "rb_flow"
+  topic_state: "rb_state"
+  batch_size: 1000
+  batch_timeout_ms: 50
+
+<% psql_enabled = (@mode == "manager") && !@db_pass.nil? && !@db_pass.empty? %>
+postgresql:
+  enabled: <%= psql_enabled ? "true" : "false" %>
+  host: "<%= @db_hostname.nil? ? ("postgresql." + (node["redborder"]["cdomain"] rescue "redborder.cluster")) : @db_hostname %>"
+  port: <%= @db_port.nil? ? 5432 : @db_port.to_i %>
+  user: "<%= @db_username.nil? ? "postgres" : @db_username %>"
+  password: "<%= psql_enabled ? @db_pass : "" %>"
+  database: "<%= @db_name.nil? ? "redborder" : @db_name %>"
+  ap_sync_interval_sec: 60
+
 sensors:
 <% flow_ips = [] %>
 <% @flow_nodes.each do |flow_node| %>
@@ -73,13 +108,12 @@ sensors:
                               !flow_node["redborder"]["index_replicas"].nil? ) ?
                                    flow_node["redborder"]["index_replicas"].to_i : 1 ].max %>
     <% sensor_name = flow_node["rbname"].nil? ? flow_node.name : flow_node["rbname"] %>
-    <% case @mode %>
-      <% when "manager" %>
-        <% entries = sensors_template(address, version, client_stats, ap_monitor, index_partitions,
-                        index_replicas, sensor_name, port, flow_node, manager_array_of_attributes)%>
-        <% when "proxy" %>
-          <% entries = sensors_template(address, version, client_stats, ap_monitor, index_partitions,
-                        index_replicas, sensor_name, port, flow_node, proxy_array_of_attributes)%>
+    <% if @mode == "manager" %>
+      <% entries = sensors_template(address, version, client_stats, ap_monitor, index_partitions,
+                      index_replicas, sensor_name, port, flow_node, manager_array_of_attributes) %>
+    <% else %>
+      <% entries = sensors_template(address, version, client_stats, ap_monitor, index_partitions,
+                      index_replicas, sensor_name, port, flow_node, proxy_array_of_attributes) %>
     <% end %>
     <% entries.each do | entry | %>
 <%= entry %>
