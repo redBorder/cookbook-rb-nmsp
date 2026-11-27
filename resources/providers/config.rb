@@ -14,10 +14,23 @@ action :add do
       action :upgrade
     end
 
+    group 'redborder-nmsp' do
+      system true
+      action :create
+    end
+
+    user 'redborder-nmsp' do
+      system true
+      shell '/sbin/nologin'
+      home '/'
+      group 'redborder-nmsp'
+      action :create
+    end
+
     directory config_dir do
-      owner 'root'
-      group 'root'
-      mode '755'
+      owner 'redborder-nmsp'
+      group 'redborder-nmsp'
+      mode '0750'
       action :create
     end
 
@@ -35,12 +48,12 @@ action :add do
       psql_port = db_redborder['port']
     end
 
-    template '/etc/redborder-nmsp/config.yml' do
+    template '/etc/redborder-nmsp/config.yaml' do
       source 'rb-nmsp_config.yml.erb'
       cookbook 'rbnmsp'
-      owner 'root'
-      group 'root'
-      mode '0644'
+      owner 'redborder-nmsp'
+      group 'redborder-nmsp'
+      mode '0640'
       retries 2
       variables(zk_hosts: hosts,
                 flow_nodes: flow_nodes,
@@ -53,6 +66,12 @@ action :add do
                 mode: mode)
       notifies :restart, 'service[redborder-nmsp]', :delayed
       action :create
+    end
+
+    link '/etc/redborder-nmsp/config.yml' do
+      to '/etc/redborder-nmsp/config.yaml'
+      owner 'redborder-nmsp'
+      group 'redborder-nmsp'
     end
 
     template '/etc/sysconfig/redborder-nmsp' do
@@ -76,9 +95,9 @@ action :add do
       cookbook_file '/etc/redborder-nmsp/aes.keystore' do
         source 'aes.keystore'
         cookbook 'rbnmsp'
-        owner 'root'
-        group 'root'
-        mode '0644'
+        owner 'redborder-nmsp'
+        group 'redborder-nmsp'
+        mode '0640'
         ignore_failure true
         notifies :restart, 'service[redborder-nmsp]', :delayed
       end
